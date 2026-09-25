@@ -1,6 +1,4 @@
 import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import time
 from app.database.db import engine, Base, SessionLocal
 from app.models.models import Mission

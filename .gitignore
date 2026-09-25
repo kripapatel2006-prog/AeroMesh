@@ -22,10 +22,6 @@ backend/**/__pycache__/
 uploads/
 outputs/
 missions/
-backend/data/
-backend/outputs/
-backend/uploads/
-backend/demo_data/*.avi
 *.log
 
 # OS / editor
