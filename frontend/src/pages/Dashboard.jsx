@@ -1,63 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Play, Plus, Activity, Database, Clock, Crosshair,
-  MapPin, Cpu, CheckCircle2, AlertTriangle, MonitorPlay,
-  RotateCw, ArrowRight, Eye, Video
+  MapPin, Cpu, CheckCircle2, AlertTriangle, MonitorPlay
 } from 'lucide-react';
-import { useMissionStore } from '../store/missionStore';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const {
-    missions,
-    fetchMissions,
-    launchDemoMission,
-    selectMission,
-    isBackendOnline,
-    isLoading
-  } = useMissionStore();
+  const [missions, setMissions] = useState([]);
 
   useEffect(() => {
-    fetchMissions();
-  }, [fetchMissions]);
-
-  const handleLaunchDemo = async () => {
-    try {
-      const demo = await launchDemoMission();
-      navigate(`/processing?id=${demo.id}`);
-    } catch (e) {
-      console.error('Failed to launch demo:', e);
-    }
-  };
-
-  const handleOpenMission = async (mission) => {
-    await selectMission(mission.id);
-    if (mission.status === 'COMPLETED') {
-      navigate(`/viewer?id=${mission.id}`);
-    } else {
-      navigate(`/processing?id=${mission.id}`);
-    }
-  };
-
-  // Compute live aggregates from missions data
-  const completedMissions = missions.filter(m => m.status === 'COMPLETED');
-  const activeProcessing = missions.filter(m => m.status === 'PROCESSING' || m.status === 'UPLOADED');
-  
-  const avgProcessingSec = completedMissions.length > 0
-    ? completedMissions.reduce((acc, m) => acc + (m.processing_time_sec || 0), 0) / completedMissions.length
-    : 14.2;
-    
-  const avgAcc = completedMissions.length > 0
-    ? (completedMissions.reduce((acc, m) => acc + (m.estimated_accuracy_m || 0.85), 0) / completedMissions.length).toFixed(2)
-    : '0.85';
-
-  const formatDuration = (sec) => {
-    if (!sec) return '—';
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${m}m ${s}s`;
-  };
+    setMissions([
+      { id: 1, name: 'Hyderabad Infrastructure', location: '17.38°N, 78.48°E', duration: '14m 22s', frames: 4250,  status: 'Completed',  accuracy: '0.82 m', date: '2026-09-20' },
+      { id: 2, name: 'Disaster Recon — Zone B',  location: '23.02°N, 72.57°E', duration: '28m 15s', frames: 8100,  status: 'Processing', accuracy: '—',      date: '2026-09-21' },
+      { id: 3, name: 'Agricultural Survey',       location: '18.52°N, 73.85°E', duration: '45m 00s', frames: 12050, status: 'Ready',      accuracy: '1.20 m', date: '2026-09-18' },
+    ]);
+  }, []);
 
   return (
     <div className="animate-in">
@@ -65,53 +23,30 @@ const Dashboard = () => {
       {/* Hero */}
       <div className="hero-card">
         <div className="hero-badge-wrapper">
-          <span className="badge badge-demo">SIH 2026 // PS: 26158</span>
+          <span className="badge badge-demo">Demo Mode</span>
         </div>
         <div className="hero-title"><span>Aero</span>Mesh</div>
-        <div className="hero-subtitle">Single-Pass Drone to 3D Model System</div>
+        <div className="hero-subtitle">Single-Pass Drone Reconstruction</div>
         <div className="hero-desc">
-          Automated edge-optimized pipeline fusing aerial video with geospatial telemetry.
-          Extracts multi-scale ORB features, computes dense epipolar depth, and builds calibrated 3D models from a single UAV flight.
+          Transform a single UAV flight into a georeferenced 3D model.
+          Edge-optimised pipeline for rapid situational awareness and geospatial intelligence.
         </div>
         <div className="hero-actions">
-          <button className="btn btn-primary" onClick={handleLaunchDemo} disabled={isLoading}>
+          <button className="btn btn-primary" onClick={() => navigate('/processing')}>
             <Play size={15} /> Launch Demo Mission
           </button>
           <button className="btn btn-secondary" onClick={() => navigate('/new')}>
-            <Plus size={15} /> Create New Mission
-          </button>
-          <button className="btn btn-ghost" onClick={() => fetchMissions()} title="Refresh missions">
-            <RotateCw size={14} className={isLoading ? 'animate-spin' : ''} />
+            <Plus size={15} /> New Mission
           </button>
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats */}
       <div className="stat-grid">
-        <StatCard
-          label="Active Missions"
-          value={activeProcessing.length.toString()}
-          icon={<Activity size={16} style={{ color: '#38BDF8' }} />}
-          trend={`${missions.length} total registered`}
-        />
-        <StatCard
-          label="Processed 3D Models"
-          value={completedMissions.length.toString()}
-          icon={<Database size={16} style={{ color: '#22C55E' }} />}
-          trend="Georeferenced point clouds"
-        />
-        <StatCard
-          label="Avg Processing Time"
-          value={`${avgProcessingSec.toFixed(1)}s`}
-          icon={<Clock size={16} style={{ color: '#F59E0B' }} />}
-          trend="Edge OpenCV accelerated"
-        />
-        <StatCard
-          label="Estimated Accuracy"
-          value={`≤ ${avgAcc} m`}
-          icon={<Crosshair size={16} style={{ color: '#22D3EE' }} />}
-          trend="WGS-84 GSD calibrated"
-        />
+        <StatCard label="Active Missions"          value="2"      icon={<Activity size={16} style={{color:'#38BDF8'}} />} trend="+1 since yesterday" />
+        <StatCard label="Processed Models"         value="142"    icon={<Database size={16} style={{color:'#22C55E'}} />} trend="+12 this week" />
+        <StatCard label="Avg Processing Time"      value="04:32"  icon={<Clock size={16}    style={{color:'#F59E0B'}} />} trend="−2 min from baseline" />
+        <StatCard label="Georeferencing Accuracy"  value="≤ 1 m"  icon={<Crosshair size={16} style={{color:'#22D3EE'}} />} trend="Consistent" />
       </div>
 
       {/* Main grid */}
@@ -121,10 +56,7 @@ const Dashboard = () => {
         <div className="card">
           <div className="card-header">
             <span className="card-title">
-              <Database size={15} /> Mission Registry & Datasets
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              {missions.length} mission{missions.length === 1 ? '' : 's'} recorded
+              <Database size={15} /> Recent Missions
             </span>
           </div>
           <div className="table-wrapper">
@@ -133,69 +65,30 @@ const Dashboard = () => {
                 <tr>
                   <th>Mission</th>
                   <th>Location</th>
-                  <th>Video</th>
-                  <th>Keyframes</th>
+                  <th>Duration</th>
+                  <th>Frames</th>
                   <th>Status</th>
                   <th>Accuracy</th>
-                  <th>Action</th>
+                  <th>Date</th>
                 </tr>
               </thead>
               <tbody>
-                {missions.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', padding: '36px', color: 'var(--text-muted)' }}>
-                      No missions registered yet. Click <strong>"Launch Demo Mission"</strong> to test the real OpenCV pipeline.
+                {missions.map(m => (
+                  <tr key={m.id}>
+                    <td style={{fontWeight:600}}>{m.name}</td>
+                    <td className="muted">
+                      <span style={{display:'flex', alignItems:'center', gap:'5px'}}>
+                        <MapPin size={12} style={{color:'var(--text-dim)', flexShrink:0}} />
+                        {m.location}
+                      </span>
                     </td>
+                    <td className="muted">{m.duration}</td>
+                    <td className="mono">{m.frames.toLocaleString()}</td>
+                    <td><StatusBadge status={m.status} /></td>
+                    <td className="mono">{m.accuracy}</td>
+                    <td className="muted">{m.date}</td>
                   </tr>
-                ) : (
-                  missions.map((m) => (
-                    <tr
-                      key={m.id}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleOpenMission(m)}
-                    >
-                      <td style={{ fontWeight: 600 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--accent)' }}>
-                            AM-{String(m.id).padStart(3, '0')}
-                          </span>
-                          <span>{m.name}</span>
-                        </div>
-                      </td>
-                      <td className="muted">
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <MapPin size={12} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
-                          {m.location}
-                        </span>
-                      </td>
-                      <td className="muted" style={{ fontSize: '12px' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Video size={12} style={{ color: 'var(--text-dim)' }} />
-                          {formatDuration(m.video_duration_sec)}
-                        </span>
-                      </td>
-                      <td className="mono">{m.frames_processed > 0 ? `${m.frames_processed} frames` : '—'}</td>
-                      <td><StatusBadge status={m.status} /></td>
-                      <td className="mono">{m.estimated_accuracy_m ? `≤ ${m.estimated_accuracy_m} m` : '—'}</td>
-                      <td>
-                        <button
-                          className="btn btn-ghost"
-                          style={{ padding: '4px 8px', fontSize: '11px' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenMission(m);
-                          }}
-                        >
-                          {m.status === 'COMPLETED' ? (
-                            <>Inspect <Eye size={12} style={{ marginLeft: '4px' }} /></>
-                          ) : (
-                            <>Track <ArrowRight size={12} style={{ marginLeft: '4px' }} /></>
-                          )}
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
@@ -205,35 +98,22 @@ const Dashboard = () => {
         <div className="card">
           <div className="card-header">
             <span className="card-title">
-              <Cpu size={15} /> System Pipeline Status
+              <Cpu size={15} /> System Status
             </span>
           </div>
           <div className="card-body">
-            <SysRow label="FastAPI API Gateway" online={isBackendOnline} />
-            <SysRow label="OpenCV Ingestion & Frame Splitter" online={isBackendOnline} />
-            <SysRow label="ORB Keypoint Feature Engine" online={isBackendOnline} />
-            <SysRow label="Lucas-Kanade Optical Tracker" online={isBackendOnline} />
-            <SysRow label="Epipolar 3D Triangulator" online={isBackendOnline} />
-            <SysRow label="WGS-84 Telemetry Synchronizer" online={isBackendOnline} />
-            <SysRow label="WebGL / Three.js 3D Viewer" online={true} />
+            <SysRow label="Video Processing" />
+            <SysRow label="SfM Engine" />
+            <SysRow label="MVS Engine" />
+            <SysRow label="Georeferencing" />
+            <SysRow label="3D Renderer" />
 
-            <div style={{
-              marginTop: '18px',
-              padding: '14px',
-              background: 'var(--bg-base)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-md)',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '12px'
-            }}>
-              <MonitorPlay size={18} style={{ color: 'var(--accent)', marginTop: '2px', flexShrink: 0 }} />
+            <div style={{marginTop:'20px', padding:'14px', background:'var(--bg-base)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', display:'flex', alignItems:'flex-start', gap:'12px'}}>
+              <MonitorPlay size={18} style={{color:'var(--accent)', marginTop:'1px', flexShrink:0}} />
               <div>
-                <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '3px' }}>
-                  AeroMesh Edge Hardware Ready
-                </div>
-                <div style={{ fontSize: '11.5px', color: 'var(--text-dim)', lineHeight: '1.6' }}>
-                  Target Platform: NVIDIA Jetson Orin / RTX Onboard Architecture. Local headless computer vision active.
+                <div style={{fontSize:'12.5px', fontWeight:700, color:'var(--text-primary)', marginBottom:'4px'}}>Edge Compute Ready</div>
+                <div style={{fontSize:'11.5px', color:'var(--text-dim)', lineHeight:'1.6'}}>
+                  GPU hardware acceleration enabled. Neural mesh completion active.
                 </div>
               </div>
             </div>
@@ -260,35 +140,29 @@ const StatCard = ({ label, value, icon, trend }) => (
 const StatusBadge = ({ status }) => {
   let cls = 'badge ';
   let ico = null;
-  if (status === 'COMPLETED') {
+  if (status === 'Completed' || status === 'Ready') {
     cls += 'badge-success';
     ico = <CheckCircle2 size={11} />;
-  } else if (status === 'PROCESSING' || status === 'UPLOADED') {
+  } else if (status === 'Processing') {
     cls += 'badge-processing';
-    ico = <Activity size={11} className="animate-spin" />;
-  } else if (status === 'FAILED') {
+    ico = <Activity size={11} />;
+  } else {
     cls += 'badge-warning';
     ico = <AlertTriangle size={11} />;
-  } else {
-    cls += 'badge-demo';
-    ico = <Clock size={11} />;
   }
   return (
-    <span className={cls} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', borderRadius: '999px', fontSize: '11px' }}>
+    <span className={cls} style={{display:'inline-flex', alignItems:'center', gap:'5px', borderRadius:'999px', fontSize:'11px'}}>
       {ico} {status}
     </span>
   );
 };
 
-const SysRow = ({ label, online }) => (
+const SysRow = ({ label }) => (
   <div className="system-status-row">
     <span className="system-status-label">{label}</span>
-    <div className="system-status-online" style={{ color: online ? 'var(--success)' : 'var(--danger)' }}>
-      {online ? 'Online' : 'Offline'}
-      <span
-        className="pulse-dot"
-        style={{ backgroundColor: online ? 'var(--success)' : 'var(--danger)' }}
-      ></span>
+    <div className="system-status-online">
+      Online
+      <span className="pulse-dot"></span>
     </div>
   </div>
 );
